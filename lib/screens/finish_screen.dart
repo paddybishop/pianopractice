@@ -1,15 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FinishScreen extends StatefulWidget {
+  final int extraMinutes;
+  final bool practicePieces;
+
+  FinishScreen({required this.extraMinutes, required this.practicePieces});
+
   @override
   _FinishScreenState createState() => _FinishScreenState();
 }
 
 class _FinishScreenState extends State<FinishScreen> {
-  String _practiceType = 'Pieces';
-  String _notes = "";
-  String _selectedPiece = '';
-  List<String> _pieces = ["Piece 1", "Piece 2", "Piece 3"]; // Placeholder pieces
+  List<String> _pieces = [];
+  Map<String, bool> _selectedPieces = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPieces();
+  }
+
+  Future<void> _loadPieces() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pieces = prefs.getStringList('pieces') ?? [];
+    setState(() {
+      _pieces = pieces;
+      for (var piece in pieces) {
+        _selectedPieces[piece] = false; // Initialize all as unchecked
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,96 +39,44 @@ class _FinishScreenState extends State<FinishScreen> {
         title: Text('Finish Lesson'),
       ),
       body: Padding(
-          padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Text('What did you do?', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
-            Row(
-                children: [
-                    Radio<String>(
-                      value: 'Pieces',
-                    groupValue: _practiceType,
-                    onChanged: (value) {
-                        setState(() {
-                             _practiceType = value!;
-                            });
-                     },
-                 ),
-                     Text('Pieces'),
-                    Radio<String>(
-                    value: 'Scales',
-                     groupValue: _practiceType,
-                   onChanged: (value) {
-                      setState(() {
-                        _practiceType = value!;
-                        });
-                  },
-                    ),
-                       Text('Scales'),
-                   Radio<String>(
-                       value: 'Sight-Reading',
-                        groupValue: _practiceType,
-                     onChanged: (value) {
-                         setState(() {
-                           _practiceType = value!;
-                        });
-                       },
-                    ),
-                       Text('Sight-Reading'),
-                   Radio<String>(
-                       value: 'Fun',
-                        groupValue: _practiceType,
-                    onChanged: (value) {
-                       setState(() {
-                           _practiceType = value!;
-                        });
-                   },
-                    ),
-                       Text('Fun'),
-                ],
-              ),
-          SizedBox(height: 20),
-          if (_practiceType == 'Pieces')
-             Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Text('Select a Piece', style: TextStyle(fontSize: 18)),
-                SizedBox(height: 10),
-                DropdownButton<String>(
-                   value: _selectedPiece.isEmpty ? _pieces.first : _selectedPiece,
-                  onChanged: (String? value) {
-                     setState(() {
-                        _selectedPiece = value!;
-                     });
-                   },
-                     items: _pieces.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                            child: Text(value),
-                       );
-                     }).toList(),
-                 ),
-               ],
+            Text(
+              "Well done on your practice!",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            SizedBox(height: 20),
+            Text(
+              "You added an extra ${widget.extraMinutes} minutes to your time this week.",
+              style: TextStyle(fontSize: 18),
+            ),
+            Text(
+              "You earned ${widget.extraMinutes * 10} points!",
+              style: TextStyle(fontSize: 18),
+            ),
+            if (widget.practicePieces && _pieces.isNotEmpty) ...[
               SizedBox(height: 20),
-              Text('Notes', style: TextStyle(fontSize: 18)),
-            SizedBox(height: 10),
-              TextField(
-                onChanged: (value) {
-                   setState(() {
-                      _notes = value;
+              Text(
+                "Which pieces did you practice?",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              ..._pieces.map((piece) {
+                return CheckboxListTile(
+                  title: Text(piece),
+                  value: _selectedPieces[piece],
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _selectedPieces[piece] = value ?? false;
                     });
                   },
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                    hintText: 'Enter Notes',
-                 ),
-               ),
-          ]
+                );
+              }).toList(),
+            ],
+          ],
         ),
-      )
+      ),
     );
   }
 }

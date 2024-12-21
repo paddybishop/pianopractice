@@ -135,32 +135,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showTimerFinishedOptions() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text("Timer is Done"),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _secondsLeft += 10 * 60;
-                });
-                _startTimer();
-              },
-              child: Text("Add 10 Minutes"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FinishScreen()),
-                );
-              },
-              child: Text("Finish Lesson"),
-            ),
-          ],
-        ),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Timer Finished'),
+        content: Text('What would you like to do next?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _secondsLeft += 10 * 60; // Add 10 minutes
+              });
+              Navigator.pop(context); // Close dialog
+              _startTimer(); // Restart timer
+            },
+            child: Text('Add 10 Minutes'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FinishScreen(
+                  extraMinutes: _duration,
+                  practicePieces: _practiceTypes['Pieces'] ?? false,
+                )
+              ),
+              );
+            },
+            child: Text('Finish Lesson'),
+          ),
+        ],
       ),
     );
   }
@@ -219,6 +223,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             SizedBox(height: 20),
 
             // Duration Selection Buttons
+            Text(
+              'How long have you got?',
+              style: TextStyle(fontSize: 18, color: _getColor()),
+            ),
             if (!_isTimerRunning) ...[
               Center(
                 child: Wrap(
@@ -270,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
             // Practice Types Section
             Text(
-              'Practice Types',
+              'What do you fancy practicing today?',
               style: TextStyle(fontSize: 18, color: _getColor()),
             ),
             ..._practiceTypes.keys.map((type) {
